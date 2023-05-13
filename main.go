@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -8,6 +9,11 @@ import (
 	"sync"
 	"time"
 )
+
+//Приложению есть куда бесконечно расти
+//обработка ошибок
+// ограниченное количество сообщений
+//вместо sync.Map использовать обычную мапу защищенную мютексом RW
 
 type QList struct {
 	channels sync.Map
@@ -72,11 +78,14 @@ func main() {
 	})
 
 	port := "8080"
-	if os.Args[1] != "" {
+	if len(os.Args) > 1 && os.Args[1] != "" {
 		port = os.Args[1]
 	}
 
-	http.ListenAndServe(":"+port, mux)
+	err := http.ListenAndServe(":"+port, mux)
+	if err != nil && err != http.ErrServerClosed {
+		log.Printf("Error listen http server %v", err)
+	}
 }
 
 func (q *QList) Store(name, value string) {
